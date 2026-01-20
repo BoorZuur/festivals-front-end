@@ -44,9 +44,14 @@ function FestivalDetail() {
                         {/* Image */}
                         <div className="md:w-1/3 w-full">
                             <img
-                                src={Festival.imageUrl}
-                                alt={Festival.title}
-                                className="w-full h-full object-cover rounded"
+                                className="w-full h-48 sm:h-56 md:h-64 object-contain rounded"
+                                src={Festival.imageUrl || '/vite.svg'}
+                                alt={Festival.title || 'Festival image'}
+                                loading="lazy"
+                                onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = '/vite.svg';
+                                }}
                             />
                         </div>
 
