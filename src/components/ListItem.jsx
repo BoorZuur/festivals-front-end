@@ -1,5 +1,5 @@
 import Icon from "@mdi/react";
-import {mdiBookmark, mdiMapMarker} from "@mdi/js";
+import {mdiBookmark, mdiCalendar, mdiDelete, mdiInformation, mdiMapMarker} from "@mdi/js";
 import {Link} from "react-router";
 
 
@@ -49,16 +49,26 @@ function ListItem({spotDeleted, item}) {
                     <p className="text-gray-700 text-base">{item.description.substring(0, 60)}</p>
                     <div className="flex items-center mt-2">
                         <Icon path={mdiMapMarker} className="text-gray-500 w-5 h-5"/>
-                        <p className="text-gray-500 text-sm">{item.locationType}</p>
+                        <p className="ml-1 text-gray-500 text-sm">{item.locationType}</p>
                     </div>
-                    <p className="text-gray-500 text-sm mt-2">Date: {new Date(item.date).toLocaleDateString()}</p>
+                    <div className="flex items-center mt-2">
+                        <Icon path={mdiCalendar} className="text-gray-500 w-5 h-5"/>
+                        <p className="ml-1 text-gray-500 text-sm">{new Date(item.date).toLocaleDateString()}</p>
+                    </div>
                     <div className="flex justify-between items-center mt-4">
                         <Link to={`/festivals/${item.id}`}
                               className="text-white bg-blue-600 hover:bg-blue-700 p-3 rounded cursor-pointer">
-                            View Details
+                            <div className="flex items-center">
+                                <Icon path={mdiInformation} className="text-white w-5 h-5"/>
+                                <span className="ml-1">Details</span>
+                            </div>
                         </Link>
                         <button onClick={deleteSpot}
-                                className="text-white bg-red-600 hover:bg-red-700 p-3 rounded cursor-pointer">Delete
+                                className="text-white bg-red-600 hover:bg-red-700 p-3 rounded cursor-pointer">
+                            <div className="flex items-center">
+                                <Icon path={mdiDelete} className="text-white w-5 h-5"/>
+                                <span className="ml-1">Delete</span>
+                            </div>
                         </button>
                     </div>
                 </div>

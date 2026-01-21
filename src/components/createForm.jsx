@@ -1,6 +1,6 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 
-function CreateForm({onCreated}) {
+function CreateForm({onCreated, festival = null, festivalId = null, isEditMode = false}) {
     const [formdata, setFormdata] = useState({
         name: '',
         description: '',
@@ -11,13 +11,33 @@ function CreateForm({onCreated}) {
         hasBookmark: false,
         date: new Date().toISOString().split('T')[0],
         organizer: '',
-        countryCode: 'nl',
-        genre: [],
-        lineup: []
+        countryCode: '',
+        genre: '',
+        lineup: ''
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const webservice = import.meta.env.VITE_WEBSERVICE_URL;
+
+    // Populate form with existing festival data in edit mode
+    useEffect(() => {
+        if (isEditMode && festival) {
+            setFormdata({
+                name: festival.name || '',
+                description: festival.description || '',
+                review: festival.review || 0,
+                location: festival.location || {type: 'Point', coordinates: [0, 0]},
+                locationType: festival.locationType || 'other',
+                imageUrl: festival.imageUrl || 'https://placehold.co/600x400/png?text=No+Image',
+                hasBookmark: festival.hasBookmark || false,
+                date: festival.date ? new Date(festival.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                organizer: festival.organizer || '',
+                countryCode: festival.countryCode || '',
+                genre: Array.isArray(festival.genre) ? festival.genre.join(', ') : (festival.genre || ''),
+                lineup: Array.isArray(festival.lineup) ? festival.lineup.join(', ') : (festival.lineup || '')
+            });
+        }
+    }, [isEditMode, festival]);
 
     const handleInputChange = (e) => {
         const {name, value, type, checked} = e.target;
@@ -31,12 +51,6 @@ function CreateForm({onCreated}) {
                         ? [Number(value), formdata.location.coordinates[1]]
                         : [formdata.location.coordinates[0], Number(value)]
                 }
-            });
-        } else if (name === 'genre' || name === 'lineup') {
-            // Convert comma-separated string to array
-            setFormdata({
-                ...formdata,
-                [name]: value.split(',').map(item => item.trim()).filter(item => item)
             });
         } else if (type === 'checkbox') {
             setFormdata({
@@ -53,15 +67,68 @@ function CreateForm({onCreated}) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        createFestival();
+        if (isEditMode) {
+            updateFestival();
+        } else {
+            createFestival();
+        }
+    }
+
+    const updateFestival = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const payload = {
+                ...formdata,
+                genre: typeof formdata.genre === 'string'
+                    ? formdata.genre.split(',').map(s => s.trim()).filter(Boolean)
+                    : formdata.genre,
+                lineup: typeof formdata.lineup === 'string'
+                    ? formdata.lineup.split(',').map(s => s.trim()).filter(Boolean)
+                    : formdata.lineup
+            };
+
+            const response = await fetch(`${webservice}/${festivalId}`, {
+                method: "PUT",
+                body: JSON.stringify(payload),
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                },
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                onCreated(festivalId);
+            } else {
+                setError(data.error || "Fout bij het updaten van het Festival");
+            }
+
+        } catch (error) {
+            console.error("Fout bij het updaten van het Festival:", error);
+            setError("Er is een fout opgetreden bij het updaten");
+        } finally {
+            setLoading(false);
+        }
     }
 
     const createFestival = async () => {
         setLoading(true);
+        setError('');
         try {
+            const payload = {
+                ...formdata,
+                genre: typeof formdata.genre === 'string'
+                    ? formdata.genre.split(',').map(s => s.trim()).filter(Boolean)
+                    : formdata.genre,
+                lineup: typeof formdata.lineup === 'string'
+                    ? formdata.lineup.split(',').map(s => s.trim()).filter(Boolean)
+                    : formdata.lineup
+            };
+
             const response = await fetch(webservice, {
                 method: "POST",
-                body: JSON.stringify(formdata),
+                body: JSON.stringify(payload),
                 headers: {
                     "Content-Type": "application/json",
                     Accept: "application/json",
@@ -238,7 +305,7 @@ function CreateForm({onCreated}) {
                         type="text"
                         id="genre"
                         name="genre"
-                        value={formdata.genre.join(', ')}
+                        value={formdata.genre}
                         onChange={handleInputChange}
                         placeholder="Rock, Pop, Electronic"
                     />
@@ -251,7 +318,7 @@ function CreateForm({onCreated}) {
                         className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-20"
                         id="lineup"
                         name="lineup"
-                        value={formdata.lineup.join(', ')}
+                        value={formdata.lineup}
                         onChange={handleInputChange}
                         placeholder="Artist 1, Artist 2, Artist 3"
                     />
@@ -290,7 +357,7 @@ function CreateForm({onCreated}) {
                 type="submit"
                 disabled={loading}
             >
-                {loading ? 'Creating...' : 'Create Festival'}
+                {loading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Festival' : 'Create Festival')}
             </button>
         </form>
     );
