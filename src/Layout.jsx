@@ -9,12 +9,15 @@ function Layout() {
                     <div className="container flex flex-wrap items-center justify-between mx-auto text-slate-800">
                         <Link to={`/`}
                               className="mr-4 block cursor-pointer py-1.5 text-base text-slate-800 font-semibold">
-                            Festivals
+                            Festival Finder
                         </Link>
                         <div>
                             <ul className="flex flex-row gap-2 mt-2 mb-4 lg:mb-0 lg:mt-0 lg:gap-6">
                                 <li className="flex items-center p-1 text-sm gap-x-2 text-slate-600">
                                     <Link to={`/`} className="flex items-center">Home</Link>
+                                </li>
+                                <li className="flex items-center p-1 text-sm gap-x-2 text-slate-600">
+                                    <Link to={`/festivals`} className="flex items-center">Festivals</Link>
                                 </li>
                                 <li className="flex items-center p-1 text-sm gap-x-2 text-slate-600">
                                     <Link to={`/create`} className="flex items-center">Create</Link>

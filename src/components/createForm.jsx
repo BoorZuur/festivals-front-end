@@ -1,6 +1,8 @@
 import {useEffect, useState} from "react";
+import { useFestivals } from "../context/FestivalContext.jsx";
 
 function CreateForm({onCreated, festival = null, festivalId = null, isEditMode = false}) {
+    const { createFestival, updateFestival } = useFestivals();
     const [formdata, setFormdata] = useState({
         name: '',
         description: '',
@@ -17,7 +19,6 @@ function CreateForm({onCreated, festival = null, festivalId = null, isEditMode =
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const webservice = import.meta.env.VITE_WEBSERVICE_URL;
 
     // Populate form with existing festival data in edit mode
     useEffect(() => {
@@ -68,85 +69,40 @@ function CreateForm({onCreated, festival = null, festivalId = null, isEditMode =
     const handleSubmit = (e) => {
         e.preventDefault();
         if (isEditMode) {
-            updateFestival();
+            handleUpdate();
         } else {
-            createFestival();
+            handleCreate();
         }
     }
 
-    const updateFestival = async () => {
+    const handleUpdate = async () => {
         setLoading(true);
         setError('');
-        try {
-            const payload = {
-                ...formdata,
-                genre: typeof formdata.genre === 'string'
-                    ? formdata.genre.split(',').map(s => s.trim()).filter(Boolean)
-                    : formdata.genre,
-                lineup: typeof formdata.lineup === 'string'
-                    ? formdata.lineup.split(',').map(s => s.trim()).filter(Boolean)
-                    : formdata.lineup
-            };
 
-            const response = await fetch(`${webservice}/${festivalId}`, {
-                method: "PUT",
-                body: JSON.stringify(payload),
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                },
-            });
-            const data = await response.json();
+        const result = await updateFestival(festivalId, formdata);
 
-            if (response.ok) {
-                onCreated(festivalId);
-            } else {
-                setError(data.error || "Fout bij het updaten van het Festival");
-            }
-
-        } catch (error) {
-            console.error("Fout bij het updaten van het Festival:", error);
-            setError("Er is een fout opgetreden bij het updaten");
-        } finally {
-            setLoading(false);
+        if (result.success) {
+            onCreated(festivalId);
+        } else {
+            setError(result.error || "Fout bij het updaten van het Festival");
         }
+
+        setLoading(false);
     }
 
-    const createFestival = async () => {
+    const handleCreate = async () => {
         setLoading(true);
         setError('');
-        try {
-            const payload = {
-                ...formdata,
-                genre: typeof formdata.genre === 'string'
-                    ? formdata.genre.split(',').map(s => s.trim()).filter(Boolean)
-                    : formdata.genre,
-                lineup: typeof formdata.lineup === 'string'
-                    ? formdata.lineup.split(',').map(s => s.trim()).filter(Boolean)
-                    : formdata.lineup
-            };
 
-            const response = await fetch(webservice, {
-                method: "POST",
-                body: JSON.stringify(payload),
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                },
-            });
-            const data = await response.json();
+        const result = await createFestival(formdata);
 
-            if (response.status === 201) {
-                onCreated(data.id);
-            } else {
-                setError(data.error || "Fout bij het aanmaken van het Festival");
-            }
-
-        } catch (error) {
-            console.error("Fout bij het ophalen van het Festival:", error);
-        } finally {
-            setLoading(false);
+        if (result.success) {
+            onCreated(result.id);
+        } else {
+            setError(result.error || "Fout bij het aanmaken van het Festival");
         }
+
+        setLoading(false);
     }
 
     return (

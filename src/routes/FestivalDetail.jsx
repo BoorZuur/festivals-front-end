@@ -1,34 +1,26 @@
 import {useParams} from "react-router";
 import {useEffect, useState} from "react";
 import Icon from "@mdi/react";
-import {mdiLoading} from "@mdi/js";
+import {mdiLoading, mdiAlertCircle} from "@mdi/js";
+import {Link} from "react-router";
 import CreateForm from "../components/createForm.jsx";
+import { useFestivals } from "../context/FestivalContext.jsx";
 
 function FestivalDetail() {
     const params = useParams();
     const id = params.id;
     const [Festival, setFestival] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
-    const webservice = import.meta.env.VITE_WEBSERVICE_URL;
+    const [notFound, setNotFound] = useState(false);
+    const { fetchFestival } = useFestivals();
 
     const getFestival = async () => {
-        try {
-            const response = await fetch(`${webservice}/${id}`, {
-                method: "GET",
-                headers: {
-                    Accept: "application/json",
-                },
-            });
-            const data = await response.json();
-
-            if (data.error) {
-                throw new Error(data.error);
-            }
-
+        const data = await fetchFestival(id);
+        if (data) {
             setFestival(data);
-            console.log(data)
-        } catch (error) {
-            console.error("Fout bij het ophalen van het Festivals:", error);
+            setNotFound(false);
+        } else {
+            setNotFound(true);
         }
     }
 
@@ -42,6 +34,36 @@ function FestivalDetail() {
         // Exit edit mode
         setIsEditing(false);
     };
+
+    // Show 404 if festival not found
+    if (notFound) {
+        return (
+            <div className="container mx-auto p-4">
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+                    <Icon path={mdiAlertCircle} className="w-32 h-32 text-red-500 mb-6"/>
+                    <h1 className="text-6xl font-bold text-gray-800 mb-4">404</h1>
+                    <h2 className="text-3xl font-semibold text-gray-700 mb-4">Festival Not Found</h2>
+                    <p className="text-xl text-gray-600 mb-8 max-w-md">
+                        Sorry, the festival you're looking for doesn't exist or has been removed.
+                    </p>
+                    <div className="flex gap-4">
+                        <Link
+                            to="/festivals"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-200"
+                        >
+                            View All Festivals
+                        </Link>
+                        <Link
+                            to="/"
+                            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-200"
+                        >
+                            Go to Home
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="container mx-auto p-4">
